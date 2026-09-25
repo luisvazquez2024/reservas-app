@@ -1,0 +1,4 @@
+MYSQL_DATABASE=reservasdb
+MYSQL_USER=reservas_user
+MYSQL_PASSWORD=reservas_pass
+MYSQL_ROOT_PASSWORD=reservas_root_pass
