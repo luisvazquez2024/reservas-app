@@ -4,5 +4,6 @@ env
 .env.example
 
 docker-compose.yml
-./k8s/
+
+k8s/
 
