@@ -328,6 +328,7 @@ estudiante@curso-docker:~/Documentos/reservas-app$ # Prueba A: Modificando códi
 echo "// prueba cache" >> backend/server.js
 docker build -t reservas-api:v1 ./backend
 
+```
 # Limpiar el cambio de prueba
 git checkout backend/server.js
 [+] Building 1.3s (11/11) FINISHED                                                                                                                                                                            docker:default
@@ -354,8 +355,9 @@ git checkout backend/server.js
  => => naming to docker.io/library/reservas-api:v1                                                                                                                                                                      0.0s
  => => unpacking to docker.io/library/reservas-api:v1                                                                                                                                                                   0.0s
 Actualizada 1 ruta desde el índice
----
---
+```
+
+
 estudiante@curso-docker:~/Documentos/reservas-app$ # Agregá un espacio al final de package.json (un 'touch' no sirve porque Docker evalúa el contenido, no la fecha)
 echo " " >> backend/package.json
 
