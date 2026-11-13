@@ -207,6 +207,92 @@ nginx: [emerg] host not found in upstream "reservas-api" in /etc/nginx/conf.d/de
 
 
 
+Nginx resuelve los nombres de dominio definidos en las directivas proxy_pass una única vez durante la lectura de su configuración al iniciar. Como el DNS no encuentra el host reservas-api al estar fuera de la red, Nginx aborta el arranque con código de salida 1 en lugar de iniciar sin poder enrutar el tráfico.
+
+``` 
 
 
+``` 
+Punto 5: Corrección de red y prueba de funcionamiento (Same-Origin)
+Comandos
+
+
+docker rm reservas-frontend
+
+docker run -d \
+  --name reservas-frontend \
+  --network reservas-net \
+  -p 3000:8080 \
+  -e API_HOST=reservas-api \
+  -e API_PORT=3000 \
+  reservas-frontend:v1
+
+estudiante@curso-docker:~/Documentos/reservas-app$
+curl -s localhost:3001/salas
+curl -s localhost:3000/api/salas
+
+
+[{"id":4,"nombre":"Aula Magna","capacidad":120,"ubicacion":"Edificio central"},{"id":1,"nombre":"Laboratorio 1","capacidad":24,"ubicacion":"Planta baja, ala este"},{"id":2,"nombre":"Laboratorio 2","capacidad":24,"ubicacio[{"id":4,"nombre":"Aula Magna","capacidad":120,"ubicacion":"Edificio central"},{"id":1,"nombre":"Laboratorio 1","capacidad":24,"ubicacion":"Planta baja, ala este"},{"id":2,"nombre":"Laboratorio 2","capacidad":24,"ubicacion":"Planta baja, ala oeste"},{"id":3,"nombre":"Laboratorio de Redes","capacidad":16,"ubicacion":"Primer piso"},{"id":5,"nombre":"Sala de Reuniones","capacidad":10,"ubicacion":"Primer piso"}]
+estudiante@curso-docker:~/Documentos/reservas-app$
+
+``` 
+
+
+``` 
+Punto 7: Comprobación de persistencia de datos
+Comandos
+
+entos/reservas-app$ docker rm -f reservas-db
+reservas-db
+estudiante@curso-docker:~/Documentos/reservas-app$ docker volume ls
+DRIVER    VOLUME NAME
+local     95ed3d07ef9f7917924c8038772fb525a74079089043f7820f19832465afddc1
+local     reservas-db-data
+estudiante@curso-docker:~/Documentos/reservas-app$ docker run -d \
+  --name reservas-db \
+  --network reservas-net \
+  -e MYSQL_DATABASE=reservasdb \
+  -e MYSQL_USER=reservas_user \
+  -e MYSQL_PASSWORD=reservas_pass \
+  -e MYSQL_ROOT_PASSWORD=reservas_root_pass \
+  -v reservas-db-data:/var/lib/mysql \
+  mysql:8.4
+58960647b9239ff333e969e9267f62e16877840bcdac752db64bbcc0625f0631
+estudiante@curso-docker:~/Documentos/reservas-app$ docker restart reservas-api
+reservas-api
+
+estudiante@curso-docker:~/Documentos/reservas-app$ docker ps -a
+CONTAINER ID   IMAGE             COMMAND                  CREATED              STATUS              PORTS                                         NAMES
+58960647b923   mysql:8.4         "docker-entrypoint.s…"   About a minute ago   Up About a minute   3306/tcp, 33060/tcp                           reservas-db
+74cbef19647d   7c12aee78d01      "/docker-entrypoint.…"   14 minutes ago       Up 8 minutes        0.0.0.0:3000->8080/tcp, [::]:3000->8080/tcp   reservas-frontend
+6d4ac4f013ce   reservas-api:v1   "docker-entrypoint.s…"   50 minutes ago       Up About a minute   0.0.0.0:3001->3000/tcp, [::]:3001->3000/tcp   reservas-api
+estudiante@curso-docker:~/Documentos/reservas-app$ docker volume ls
+DRIVER    VOLUME NAME
+local     95ed3d07ef9f7917924c8038772fb525a74079089043f7820f19832465afddc1
+local     reservas-db-data
+estudiante@curso-docker:~/Documentos/reservas-app$ docker network ls
+NETWORK ID     NAME           DRIVER    SCOPE
+d380b1c62367   bridge         bridge    local
+4bc0b8594185   host           host      local
+e34c83a861e6   none           null      local
+2751c18a1c8c   reservas-net   bridge    local
+estudiante@curso-docker:~/Documentos/reservas-app$ docker exec reservas-db mysql -ureservas_user -preservas_pass reservasdb \
+  -e 'SELECT id, fecha, franja, responsable, creada_en FROM reservas;'
+mysql: [Warning] Using a password on the command line interface can be insecure.
+id	fecha	franja	responsable	creada_en
+1	2026-11-13	2	C�tedra de Sistemas Operativos	2026-11-13 18:04:14
+2	2026-11-13	4	C�tedra de Redes	2026-11-13 18:04:14
+3	2026-11-13	5	Secretar�a Acad�mica	2026-11-13 18:04:14
+
+
+``` 
+
+```
+Punto 8: Documentación para el README.md (Orden de arranque y limitaciones)Puedes copiar directamente este bloque en tu README.md
+
+:Orden obligatorio de arranque y consecuencias de invertirlo
+El ciclo de levantar la infraestructura manualmente sigue una dependencia estricta: Red $\rightarrow$ Volumen $\rightarrow$ Base de Datos $\rightarrow$ API $\rightarrow$ Frontend.   Red y Volumen antes que los contenedores:Si se omite crear la red: docker run --network reservas-net ... falla inmediatamente con Error response from daemon: network reservas-net not found.
+Si se omite crear el volumen: Docker crea un volumen nuevo vacío automáticamente con ese nombre, pero si se comete un error de tipeo al recrear la base, se pierde el acceso a los datos anteriores.   
+Base de datos lista (port: 3306) antes que la API:Si se levanta la API antes que MySQL (o mientras MySQL aún está inicializando en port: 0): La API intenta conectarse al arrancar, recibe un error de red ECONNREFUSED (o ENOTFOUND si el contenedor ni siquiera existe) y el proceso de Node.js termina con error.   
+API iniciada antes que el Frontend:Si se levanta el Frontend antes que la API: Nginx intenta resolver el DNS de reservas-api al arrancar. Al no existir el contenedor en la red, devuelve nginx: [emerg] host not found in upstream "reservas-api:3000" y el contenedor muere (Exited (1)).
 ``` 
