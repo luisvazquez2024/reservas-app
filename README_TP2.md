@@ -3,7 +3,7 @@ Reservas App
 Aplicación para gestión de reservas (Trabajo Práctico N° 2) .
 
 
--- 
+``` 
 Consignas
 1) La imagen de la API (backend/Dockerfile). Escribir un primer Dockerfile ingenuo —
 una sola etapa, base node:20 completa, COPY . . seguido de npm install— y medirlo.
@@ -53,9 +53,9 @@ obtenido es el punto de comparación de todo el práctico --
 `estudiante@curso-docker:~/Documentos/reservas-app$ docker images reservas-api`                                                                                                                          i Info →   U  In Use
 IMAGE                ID             DISK USAGE   CONTENT SIZE   EXTRA
 reservas-api:naive   8297faaca541       1.59GB          402MB        
---
+```
 
---
+```
 2)Escribir la versión definitiva, multi-etapa, con los siguientes requisitos, que no son
 sugerencias:
 una etapa deps que instale únicamente las dependencias de producción con npm ci --omit=dev. Adviértase que npm ci respeta el archivo de bloqueo, mientras que npm
@@ -67,11 +67,8 @@ usuario no privilegiado. La imagen oficial de Node ya provee el usuario node: no
 corresponde crear uno;
 d) ARG APP_VERSION=v1 junto con ENV APP_VERSION=${APP_VERSION};e)
 EXPOSE 3000 y CMD en forma de lista.
---
-
-
----
-
+```
+```
 # Etapa 1: Dependencias de Producción
 FROM node:20-alpine AS deps
 WORKDIR /app
@@ -95,9 +92,7 @@ EXPOSE 3000
 
 CMD ["node", "server.js"]
 
----
-
----
+```
 3) Crear el archivo backend/.dockerignore con node_modules, .git, .env y npm-
 debug.log*. Sin él, el directorio node_modules de la máquina local viaja al contexto de
 build, lo vuelve pesado y, en presencia de un COPY . ., puede sobrescribir el que instaló la
@@ -163,7 +158,7 @@ imprimir v2
 v2
 estudiante@curso-docker:~/Documentos/reservas-app$ --
 
-
+```
 -- Punto 5 y 6: Archivos y construcción de reservas-frontend
 1. Archivo frontend/.dockerignore
 --
@@ -176,8 +171,9 @@ npm-debug.log*
 '''
 -- Evita enviar carpetas pesadas al daemon de Docker y 
 -- previene que una compilación dist o node_modules local pise lo que se construye dentro del contenedor
+```
 
---
+```
 # Etapa 1: Construcción de assets estáticos
 FROM node:20-alpine AS builder
 WORKDIR /app
@@ -199,10 +195,9 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx/templates/default.conf.template /etc/nginx/templates/default.conf.template
 
 EXPOSE 8080
+```
 
---
-
---
+```
 ### Construir y verificar las 3 propiedades del frontend
 
 # Construir la imagen del frontend
@@ -216,9 +211,9 @@ docker run --rm reservas-frontend:v1 node --version
 
 # 7.c) Registrar el tamaño resultante
 docker images reservas-frontend
---
+```
 
---
+```
 estudiante@curso-docker:~/Documentos/reservas-app$ docker build -t reservas-frontend:v1 ./frontend
 [+] Building 8.1s (17/17) FINISHED                                                                                                                                                                            docker:default
  => [internal] load build definition from Dockerfile                                                                                                                                                                    0.0s
@@ -268,28 +263,27 @@ estudiante@curso-docker:~/Documentos/reservas-app$ docker build -t reservas-fron
  => => exporting manifest list sha256:c2d26a09c4c1a0aa5ec0b8475e506f3d96f580c90fab619bf8973ac426e8e9ab                                                                                                                  0.0s
  => => naming to docker.io/library/reservas-frontend:v1                                                                                                                                                                 0.0s
  => => unpacking to docker.io/library/reservas-frontend:v1   
- --
+ ```
 
- --
+ ```
  estudiante@curso-docker:~/Documentos/reservas-app$ docker run --rm reservas-frontend:v1 whoami
 nginx
 estudiante@curso-docker:~/Documentos/reservas-app$ --
 
 -- estudiante@curso-docker:~/Documentos/reservas-app$ docker run --rm reservas-frontend:v1 node --version
 /docker-entrypoint.sh: exec: line 47: node: not found
---
+```
 
--- 
+```
 estudiante@curso-docker:~/Documentos/reservas-app$ docker images reservas-frontend                                                                                                                                                                                                         i Info →   U  In Use
 IMAGE                  ID             DISK USAGE   CONTENT SIZE   EXTRA
 reservas-frontend:v1   c2d26a09c4c1       73.9MB           21MB        
 estudiante@curso-docker:~/Documentos/reservas-app$ 
---
+```
 
---
 Punto 9: Inspección de capas con docker history--
---
---
+```
+```
 estudiante@curso-docker:~/Documentos/reservas-app$ docker history reservas-api:v1 --format "table {{.ID}}\t{{.CreatedBy}}\t{{.Size}}" | grep -v "0B"
 IMAGE          CREATED BY                                      SIZE
 <missing>      COPY --chown=node:node . . # buildkit           81.9kB
@@ -300,14 +294,14 @@ IMAGE          CREATED BY                                      SIZE
 <missing>      RUN /bin/sh -c addgroup -g 1000 node     && …   130MB
 <missing>      ADD alpine-minirootfs-3.23.4-x86_64.tar.gz /…   9.11MB
 
---
+```
  Identificá la capa que aporta el mayor peso (verás que la capa base de node:20-alpine pesa alrededor de ~130 MB —el runtime de Node.js y el sistema operativo Alpine— y la capa de COPY --from=deps ... /app/node_modules aporta los ~65-75 MB restantes con las dependencias de producción de Express/MySQL).
---
+```
 
---
+```
 Punto 10: Demostración del caché de construcciónEjecutá esta secuencia para comprobar cómo funciona el árbol de caché de Docker:   
-
-
+```
+```
 Prueba A — Modificando un archivo de código fuente:
 Bash# Agregá un comentario inofensivo al final de un archivo de código del backend
 echo "// prueba cache" >> backend/src/index.js
@@ -316,7 +310,7 @@ echo "// prueba cache" >> backend/src/index.js
 docker build -t reservas-api:v1 ./backend
 (Qué ocurre: En la salida de la terminal vas a ver CACHED en COPY package.json package-lock.json ./ y en RUN npm ci --omit=dev. Solo se vuelve a ejecutar el COPY del código fuente.   
 
-
+```
 Prueba B — Modificando el manifiesto de dependencias:
 # Agregá un espacio al final de package.json (un 'touch' no sirve porque Docker evalúa el contenido, no la fecha)
 echo " " >> backend/package.json
@@ -326,12 +320,10 @@ docker build -t reservas-api:v1 ./backend
 
 Qué ocurre: Se invalida el caché en COPY package.json package-lock.json ./ y Docker se ve obligado a ejecutar nuevamente RUN npm ci --omit=dev desde cero
 
---
+```
 Explicación en dos líneas para el README.md:
 Docker calcula un hash sobre el contenido de cada instrucción de forma secuencial: al copiar primero package*.json e instalar dependencias antes que el código fuente, los cambios frecuentes en la lógica de la aplicación no invalidan la capa pesada de node_modules. En cambio, modificar el manifiesto altera su checksum e invalida esa capa y todas las instrucciones posteriores.
---
-
---
+```
 estudiante@curso-docker:~/Documentos/reservas-app$ # Prueba A: Modificando código fuente real (server.js)
 echo "// prueba cache" >> backend/server.js
 docker build -t reservas-api:v1 ./backend
@@ -395,7 +387,7 @@ docker build -t reservas-api:v1 ./backend
  
 
 
- ---
+ ```
  Punto 11: Publicar ambas imágenes en Docker Hub
 # Iniciar sesión en Docker Hub
 docker login
@@ -437,9 +429,7 @@ b16687ec2b7b: Layer already exists
 4fed3d46aa42: Pushed 
 f79056b7935e: Layer already exists 
 b36fbaee0102: Pushed 
-v1: digest: sha256:7c12aee78d0162f927ca98721de506d539c21354e141ea512dabc1975eeec7d1 size: 856
+v1: digest: sha256:7c12aee78d0162f927ca98721de506d539c21354e141ea512dabc1975eeec7d1 size: 856 ```
 
----
---
 
 
