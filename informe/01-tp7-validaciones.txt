@@ -1,0 +1,10 @@
+$ kubectl get secret reservas-db-secret -n reservas-app -o jsonpath='{.data.MYSQL_PASSWORD}' | base64 -d; echo
+reservas_pass
+
+$ curl -s http://reservas.local/api/reservas
+[{"id":17,"sala_id":7,"sala":"Aula Magna","fecha":"2026-11-22","franja":1,"responsable":"Jefe de catedra concursos","motivo":"Concurso docente","creada_en":"2026-11-22 23:34:51"},{"id":1,"sala_id":1,"sala":"Laboratorio 1","fecha":"2026-11-22","franja":2,"responsable":"Cátedra de Sistemas Operativos","motivo":"Práctica de procesos","creada_en":"2026-11-22 22:26:53"},{"id":3,"sala_id":5,"sala":"Laboratorio de Redes","fecha":"2026-11-22","franja":4,"responsable":"Cátedra de Redes","motivo":"Laboratorio de routing","creada_en":"2026-11-22 22:26:53"},{"id":5,"sala_id":7,"sala":"Aula Magna","fecha":"2026-11-22","franja":5,"responsable":"Secretaría Académica","motivo":"Charla de egresados","creada_en":"2026-11-22 22:26:53"}]
+$ kubectl delete pod -l app=reservas-db -n reservas-app
+pod "reservas-db-84475764cc-5m6hx" deleted from reservas-app namespace
+deployment "reservas-db" successfully rolled out
+$ curl -s http://reservas.local/api/reservas (tras recrear Pod DB)
+{"error":"error interno"}

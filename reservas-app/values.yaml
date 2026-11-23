@@ -1,0 +1,48 @@
+namespace: reservas-app
+
+api:
+  image:
+    repository: luisv3k/reservas-api
+    tag: v1
+  replicas: 2
+  port: 3000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  config:
+    dbHost: "reservas-db"
+    dbPort: "3306"
+    dbName: "reservasdb"
+    port: "3000"
+    seedDemo: "true"
+  hpa:
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 50
+
+frontend:
+  image:
+    repository: luisv3k/reservas-frontend
+    tag: v1
+  replicas: 2
+  port: 8080
+  nodePort: 30301
+  config:
+    apiHost: "reservas-api"
+    apiPort: "3000"
+
+db:
+  image:
+    repository: mysql
+    tag: "8.4"
+  replicas: 1
+  port: 3306
+  storage: 1Gi
+  secret:
+    mysqlUser: "reservas_user"
+    mysqlPassword: "reservas_pass"
+    mysqlRootPassword: "reservas_root_pass"
+
+ingress:
+  host: reservas.local

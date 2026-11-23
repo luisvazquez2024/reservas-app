@@ -1,0 +1,53 @@
+$ helm history reservas -n reservas-app
+REVISION	UPDATED                 	STATUS    	CHART             	APP VERSION	DESCRIPTION     
+1       	Mon Nov 23 00:36:15 2026	superseded	reservas-app-0.1.0	v1         	Install complete
+2       	Mon Nov 23 00:36:34 2026	superseded	reservas-app-0.1.0	v1         	Upgrade complete
+3       	Mon Nov 23 00:37:11 2026	deployed  	reservas-app-0.1.0	v1         	Rollback to 1   
+
+$ kubectl get all,cm,secret,pvc,ingress,hpa -n reservas-app
+NAME                                     READY   STATUS        RESTARTS   AGE
+pod/reservas-api-5cfdfcd8f8-5rvhm        1/1     Terminating   0          64s
+pod/reservas-api-5cfdfcd8f8-fj4cf        1/1     Terminating   0          64s
+pod/reservas-api-5cfdfcd8f8-k89zb        1/1     Running       0          8s
+pod/reservas-api-5cfdfcd8f8-kjvjc        1/1     Running       0          4s
+pod/reservas-api-7c7c489cfc-2hgtp        1/1     Terminating   0          46s
+pod/reservas-api-7c7c489cfc-lcplk        1/1     Terminating   0          14s
+pod/reservas-db-84475764cc-2rpxr         1/1     Running       0          64s
+pod/reservas-frontend-5d6f5685b6-bp6hj   1/1     Running       0          64s
+pod/reservas-frontend-5d6f5685b6-mbcbd   1/1     Running       0          64s
+
+NAME                        TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+service/reservas-api        ClusterIP   10.104.53.161   <none>        3000/TCP         64s
+service/reservas-db         ClusterIP   10.107.65.185   <none>        3306/TCP         64s
+service/reservas-frontend   NodePort    10.96.220.104   <none>        8080:30301/TCP   64s
+
+NAME                                READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/reservas-api        2/2     2            2           64s
+deployment.apps/reservas-db         1/1     1            1           64s
+deployment.apps/reservas-frontend   2/2     2            2           64s
+
+NAME                                           DESIRED   CURRENT   READY   AGE
+replicaset.apps/reservas-api-5cfdfcd8f8        2         2         2       64s
+replicaset.apps/reservas-api-7c7c489cfc        0         0         0       46s
+replicaset.apps/reservas-db-84475764cc         1         1         1       64s
+replicaset.apps/reservas-frontend-5d6f5685b6   2         2         2       64s
+
+NAME                                                   REFERENCE                 TARGETS              MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/reservas-api-hpa   Deployment/reservas-api   cpu: <unknown>/50%   2         6         2          64s
+
+NAME                                 DATA   AGE
+configmap/kube-root-ca.crt           1      64s
+configmap/reservas-api-config        5      64s
+configmap/reservas-frontend-config   2      64s
+
+NAME                                    TYPE                 DATA   AGE
+secret/reservas-db-secret               Opaque               3      64s
+secret/sh.helm.release.v1.reservas.v1   helm.sh/release.v1   1      64s
+secret/sh.helm.release.v1.reservas.v2   helm.sh/release.v1   1      46s
+secret/sh.helm.release.v1.reservas.v3   helm.sh/release.v1   1      9s
+
+NAME                                    STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+persistentvolumeclaim/reservas-db-pvc   Bound    pvc-6d04a252-3317-486d-acc3-ca77b0a66a78   1Gi        RWO            local-path     <unset>                 64s
+
+NAME                                             CLASS   HOSTS            ADDRESS         PORTS   AGE
+ingress.networking.k8s.io/reservas-app-ingress   nginx   reservas.local   172.16.20.245   80      64s

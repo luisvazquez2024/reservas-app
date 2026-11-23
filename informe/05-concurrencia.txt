@@ -1,0 +1,11 @@
+$ kubectl scale deployment reservas-api --replicas=3 -n reservas-app
+deployment.apps/reservas-api scaled
+Waiting for deployment "reservas-api" rollout to finish: 2 of 3 updated replicas are available...
+deployment "reservas-api" successfully rolled out
+$ 30 peticiones POST concurrentes a /reservas:
+      1 201
+     29 409
+$ Verificación en MySQL:
+COUNT(*)
+1
+deployment.apps/reservas-api scaled

@@ -1,0 +1,35 @@
+$ helm template reservas ./reservas-app | grep '^kind:'
+kind: Secret
+kind: ConfigMap
+kind: ConfigMap
+kind: PersistentVolumeClaim
+kind: Service
+kind: Service
+kind: Service
+kind: Deployment
+kind: Deployment
+kind: Deployment
+kind: HorizontalPodAutoscaler
+kind: Ingress
+
+$ diff -u <(helm template reservas ./reservas-app) <(helm template reservas ./reservas-app --set api.image.tag=v2 --set api.hpa.maxReplicas=8)
+--- /dev/fd/63	2026-11-23 00:35:27.192117384 +0000
++++ /dev/fd/62	2026-11-23 00:35:27.192952815 +0000
+@@ -115,7 +115,7 @@
+     spec:
+       containers:
+         - name: reservas-api
+-          image: "luisv3k/reservas-api:v1"
++          image: "luisv3k/reservas-api:v2"
+           ports:
+             - containerPort: 3000
+           resources:
+@@ -216,7 +216,7 @@
+     kind: Deployment
+     name: reservas-api
+   minReplicas: 2
+-  maxReplicas: 6
++  maxReplicas: 8
+   metrics:
+     - type: Resource
+       resource:

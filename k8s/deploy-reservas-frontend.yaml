@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reservas-frontend
+  namespace: reservas-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: reservas-frontend
+  template:
+    metadata:
+      labels:
+        app: reservas-frontend
+    spec:
+      containers:
+        - name: reservas-frontend
+          image: luisv3k/reservas-frontend:v1
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: reservas-frontend-config

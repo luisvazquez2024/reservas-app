@@ -21,262 +21,162 @@ El frontend es el único punto de entrada: nadie le habla a la base
 directamente, y a la API le habla el frontend.
 
 
+# `reservas-app` — Sistema de Reservas de Salas (Variante B)
 
-###### Resolución de Consignas
-
-### Punto 3: Diagnóstico de contenedor sin configuración
-=======
-## Resolucion de consignas 
-## 3) Ejecutar deliberadamente el motor de base de datos sin config alguna.
-```docker run -d --name reservas-db mysql:8.4 ```   
-
-### diagnostico de contenedor sin configuracion
-
-
-``` estudiante@curso-docker:~/Documentos/reservas-app$ docker ps -a
-CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
-estudiante@curso-docker:~/Documentos/reservas-app$ docker run -d --name reservas-db mysql:8.4
-d2c6665ea6b93d921c946345b3c48fd7a2e9828500a2b9da4a1ab4bb1cca82b9
-```
-```a) la salida de docker ps -a , que mostrara el contenedor en estado Exited ```
-estudiante@curso-docker:~/Documentos/reservas-app$ docker ps -a
-CONTAINER ID   IMAGE       COMMAND                  CREATED              STATUS                          PORTS     NAMES
-d2c6665ea6b9   mysql:8.4   "docker-entrypoint.s…"   About a minute ago   Exited (1) About a minute ago             reservas-db
-
-``` b)la linea exacta del error informado por docker logs reservas-db ```
-estudiante@curso-docker:~/Documentos/reservas-app$ docker logs reservas-db
-2026-09-24 20:09:17+00:00 [Note] [Entrypoint]: Entrypoint script for MySQL Server 8.4.11-1.el9 started.
-2026-09-24 20:09:18+00:00 [Note] [Entrypoint]: Switching to dedicated user 'mysql'
-2026-09-24 20:09:18+00:00 [Note] [Entrypoint]: Entrypoint script for MySQL Server 8.4.11-1.el9 started.
-2026-09-24 20:09:18+00:00 [ERROR] [Entrypoint]: Database is uninitialized and password option is not specified
-    You need to specify one of the following as an environment variable: ```
- - MYSQL_ROOT_PASSWORD 
- - MYSQL_ALLOW_EMPTY_PASSWORD 
- - MYSQL_RANDOM_ROOT_PASSWORD 
-
-``` c) una explicacion, en dos lineas, de la causa de dicho error.```
- Requiere obligatoriamente una clave para el usuario root al iniciar por primera vez el programa ```
-
-
-## 4) Consultar la documentacion oficial de la imagen mysql en docker hub y determinar cuales son las variables de entorno que la imagen espera recibir.
-
-
-
-``` la variable de entorno que es mandatoria y servira para que desaparezca el error es la siguiente  
-- MYSQL_ROOT_PASSWORD: Define la password del superusuario root, Si se inicia la imagen sin este sin esta variable (o sin una de sus alternativas), el contenedor falla  se cierra.
-esas alternativas son : 
-- MYSQL_ALLOW_EMPTY_PASSWORD=yes,permite inicializar el servidor con la contraseña de root en blanco, o vacia.
-- MYSQL_RANDOM_ROOT_PASSWORD=yes,genera una contraseña aleatoria para root al iniciar y la muestra en la salida de docker logs.
-
-las siguientes variables no son estrictamente obligatorias para que levante el contenedor por si solo, pero se configuran para crear la base de datos y el usuario de la aplicacion en el primer arranque.
-
-- MYSQL_DATABASE: Crea una base de datos al arrancar(reservasdb).
-- MYSQL_USER: Crea un usuario secundario sin privilegios de root (reservas_user).
-- MYSQL_PASSWORD: Le asigna la contraseña a dicho usuario secundario (reservas_paeservasss).
-
-
-#######################################################
-ejecutar nuevamente el contenedor acompañando los valores estandar de la variante, en mi caso coloque las variables de entorno en un archivo .env
-
-``` docker run -d --name reservasdb --env-files .env mysql:8.4
-
-A continuacion se muestra la salida del comando docker logs -f reservasdb
-
-studiante@curso-docker:~/Documentos/reservas-app$ docker logs -f reservasdb
-2026-09-25 00:43:17+00:00 [Note] [Entrypoint]: Entrypoint script for MySQL Server 8.4.11-1.el9 started.
-2026-09-25 00:43:18+00:00 [Note] [Entrypoint]: Switching to dedicated user 'mysql'
-2026-09-25 00:43:18+00:00 [Note] [Entrypoint]: Entrypoint script for MySQL Server 8.4.11-1.el9 started.
-2026-09-25 00:43:18+00:00 [Note] [Entrypoint]: Initializing database files
-2026-09-25T00:43:18.304437Z 0 [System] [MY-015017] [Server] MySQL Server Initialization - start.
-2026-09-25T00:43:18.305652Z 0 [System] [MY-013169] [Server] /usr/sbin/mysqld (mysqld 8.4.11) initializing of server in progress as process 79
-2026-09-25T00:43:18.311936Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
-2026-09-25T00:43:18.623557Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
-2026-09-25T00:43:19.671011Z 6 [Warning] [MY-010453] [Server] root@localhost is created with an empty password ! Please consider switching off the --initialize-insecure option.
-2026-09-25T00:43:21.543105Z 0 [System] [MY-015018] [Server] MySQL Server Initialization - end.
-2026-09-25 00:43:21+00:00 [Note] [Entrypoint]: Database files initialized
-2026-09-25 00:43:21+00:00 [Note] [Entrypoint]: Starting temporary server
-2026-09-25T00:43:21.583494Z 0 [System] [MY-015015] [Server] MySQL Server - start.
-2026-09-25T00:43:21.820853Z 0 [System] [MY-010116] [Server] /usr/sbin/mysqld (mysqld 8.4.11) starting as process 118
-2026-09-25T00:43:21.848585Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
-2026-09-25T00:43:22.204329Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
-2026-09-25T00:43:22.485917Z 0 [Warning] [MY-010068] [Server] CA certificate ca.pem is self signed.
-2026-09-25T00:43:22.485939Z 0 [System] [MY-013602] [Server] Channel mysql_main configured to support TLS. Encrypted connections are now supported for this channel.
-2026-09-25T00:43:22.489108Z 0 [Warning] [MY-011810] [Server] Insecure configuration for --pid-file: Location '/var/run/mysqld' in the path is accessible to all OS users. Consider choosing a different directory.
-2026-09-25T00:43:22.513045Z 0 [System] [MY-011323] [Server] X Plugin ready for connections. Socket: /var/run/mysqld/mysqlx.sock
-2026-09-25T00:43:22.513099Z 0 [System] [MY-010931] [Server] /usr/sbin/mysqld: ready for connections. Version: '8.4.11'  socket: '/var/run/mysqld/mysqld.sock'  port: 0  MySQL Community Server - GPL.
-2026-09-25 00:43:22+00:00 [Note] [Entrypoint]: Temporary server started.
-'/var/lib/mysql/mysql.sock' -> '/var/run/mysqld/mysqld.sock'
-2026-09-25 00:43:23+00:00 [Note] [Entrypoint]: Creating database reservasdb
-2026-09-25 00:43:23+00:00 [Note] [Entrypoint]: Creating user reservas_user
-2026-09-25 00:43:23+00:00 [Note] [Entrypoint]: Giving user reservas_user access to schema reservasdb
-
-2026-09-25 00:43:23+00:00 [Note] [Entrypoint]: Stopping temporary server
-2026-09-25T00:43:23.797396Z 13 [System] [MY-013172] [Server] Received SHUTDOWN from user root. Shutting down mysqld (Version: 8.4.11).
-2026-09-25T00:43:24.898855Z 0 [System] [MY-010910] [Server] /usr/sbin/mysqld: Shutdown complete (mysqld 8.4.11)  MySQL Community Server - GPL.
-2026-09-25T00:43:24.898872Z 0 [System] [MY-015016] [Server] MySQL Server - end.
-2026-09-25 00:43:25+00:00 [Note] [Entrypoint]: Temporary server stopped
-
-2026-09-25 00:43:25+00:00 [Note] [Entrypoint]: MySQL init process done. Ready for start up.
-
-2026-09-25T00:43:25.842155Z 0 [System] [MY-015015] [Server] MySQL Server - start.
-2026-09-25T00:43:26.084708Z 0 [System] [MY-010116] [Server] /usr/sbin/mysqld (mysqld 8.4.11) starting as process 1
-2026-09-25T00:43:26.090423Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
-2026-09-25T00:43:26.426247Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
-2026-09-25T00:43:26.617393Z 0 [Warning] [MY-010068] [Server] CA certificate ca.pem is self signed.
-2026-09-25T00:43:26.617416Z 0 [System] [MY-013602] [Server] Channel mysql_main configured to support TLS. Encrypted connections are now supported for this channel.
-2026-09-25T00:43:26.620339Z 0 [Warning] [MY-011810] [Server] Insecure configuration for --pid-file: Location '/var/run/mysqld' in the path is accessible to all OS users. Consider choosing a different directory.
-2026-09-25T00:43:26.638752Z 0 [System] [MY-011323] [Server] X Plugin ready for connections. Bind-address: '::' port: 33060, socket: /var/run/mysqld/mysqlx.sock
-2026-09-25T00:43:26.638802Z 0 [System] [MY-010931] [Server] /usr/sbin/mysqld: ready for connections. Version: '8.4.11'  socket: '/var/run/mysqld/mysqld.sock'  port: 3306  MySQL Community Server - GPL.
-
-``` 
-
-## 5) Verificar el estado de la base desde el interior del contenedor mediante el cliente mysql que la propia provee.
-
-### a) Ejecutar SHOW DATABASES ###
-### b) Ejecutar SHOW TABLES ###
-### c) Ejecutar SHOW DATABASES ###
-```
-docker exec -it reservasdb mysql -u root -preservas_root_pass
+Proyecto integrador de la cátedra **Contenedores, Docker y Orquestación con Kubernetes (FACET - UNT)**.
+Stack tecnológico: **React + Vite** (servido con Nginx sin privilegios), **Node.js 20 + Express** y **MySQL 8.4**.
 
-estudiante@curso-docker:~/Documentos/reservas-app$ docker exec -it reservasdb mysql -u root -preservas_root_pass
-mysql: [Warning] Using a password on the command line interface can be insecure.
-Welcome to the MySQL monitor.  Commands end with ; or \g.
-Your MySQL connection id is 8
-Server version: 8.4.11 MySQL Community Server - GPL
+> **Nota de seguridad:** Las credenciales incluidas en `.env.example`, `k8s/secret-reservas-db.yaml` y `reservas-app/values.yaml` corresponden exclusivamente a valores de laboratorio. En un entorno productivo deben gestionarse mediante un gestor externo de secretos y cifrado en reposo.
 
-Copyright (c) 2000, 2026, Oracle and/or its affiliates.
+---
 
-Oracle is a registered trademark of Oracle Corporation and/or its
-affiliates. Other names may be trademarks of their respective
-owners.
+## Estructura del Repositorio
 
-Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+* `backend/`: Código fuente de la API Node/Express, `.dockerignore` y `Dockerfile` multi-etapa.
+* `frontend/`: Código fuente React/Vite, plantilla Nginx (`default.conf.template`), `.dockerignore` y `Dockerfile` multi-etapa.
+* `docker-compose.yml` y `.env.example`: Orquestación local completa en una sola máquina.
+* `k8s/`: Los 12 manifiestos individuales de Kubernetes.
+* `reservas-app/`: Chart de Helm parametrizado con los 12 objetos (`Chart.yaml`, `values.yaml` y `templates/`).
+* `ARQUITECTURA.md`: Fundamentación técnica, concurrencia, dificultades de MySQL y brecha hacia producción.
+* `INFORME.md` e `informe/`: Evidencias de despliegue, concurrencia, autoescalado y ciclo de vida Helm.
 
-mysql> SHOW DATABASES
-    -> ;
-+--------------------+
-| Database           |
-+--------------------+
-| information_schema |
-| mysql              |
-| performance_schema |
-| reservasdb         |
-| sys                |
-+--------------------+
-5 rows in set (0.01 sec)
+---
 
-mysql> USE reservasdb;
-Database changed
-mysql> SHOW TABLES;
-Empty set (0.00 sec)
+## Camino 1: Despliegue en una sola máquina con Docker Compose
 
-mysql> exit
-Bye
+1. Crear el archivo de variables de entorno a partir de la plantilla:
+   ```bash
+   cp .env.example .env
 
-``` 
-### La Segunda consulta no devuelve nada basicamente por que no hay tablas generadas , y por lo tanto muestra como retorno vacio ###
 
-## 6) ejecutar docker inspect --format '{{json .Config.Env}}' reservasdb 
-``` estudiante@curso-docker:~/Documentos/reservas-app$ docker inspect --format '{{json .Config.Env}}' reservasdb
-["MYSQL_DATABASE=reservasdb","MYSQL_USER=reservas_user","MYSQL_PASSWORD=reservas_pass","MYSQL_ROOT_PASSWORD=reservas_root_pass","PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin","GOSU_VERSION=1.19","MYSQL_MAJOR=8.4","MYSQL_VERSION=8.4.11-1.el9","MYSQL_SHELL_VERSION=8.4.10-1.el9"]
-``` 
-- Este comando deja expuesta informacion sensible, consituyendo un problema en la seguridad, punto que habra que resolver mas adelante.
 
 
+  
+## Guía de Despliegue
 
-## 7) Comprobar la ausencia de la persistencia
+El proyecto ofrece dos caminos independientes para levantar y verificar la aplicación según el entorno disponible:
+### Camino 1: Despliegue en una sola máquina (Docker Compose)
 
-``` docker exec -it reservasdb mysql -u root -preservas_root_pass -e "USE reservasdb; CREATE TABLE prueba (id INT); SHOW TABLES;"
+### Este camino permite ejecutar la aplicación completa en un equipo local utilizando únicamente Docker Engine y Docker Compose.
 
-estudiante@curso-docker:~/Documentos/reservas-app$ docker exec -it reservasdb mysql -u root -preservas_root_pass -e "USE reservasdb; CREATE TABLE prueba(id INT); SHOW TABLES;"
-mysql: [Warning] Using a password on the command line interface can be insecure.
-+----------------------+
-| Tables_in_reservasdb |
-+----------------------+
-| prueba               |
-+----------------------+
+   1. Preparar las variables de entorno:
+    Copiar la plantilla de ejemplo para generar el archivo .env local (ignorado en Git):
+    Bash
 
-```
+    ``` cp .env.example .env ``` 
 
-``` 
-- Se elimina y se vuelve a crear el contenedor 
-- docker rm -f reservasdb
+   2. Construir y levantar los servicios:
+    Bash
 
-estudiante@curso-docker:~/Documentos/reservas-app$ docker rm -f reservasdb
-reservasdb
-estudiante@curso-docker:~/Documentos/reservas-app$ docker ps -a
-CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
-estudiante@curso-docker:~/Documentos/reservas-app$  
+   ``` docker compose up -d --build ```
 
-- docker run -d --name reservasdb --env-file env mysql:8.4
+    3. Verificar el estado de los contenedores:
+    Confirmar que los tres servicios (reservas-db, reservas-api y reservas-frontend) se encuentren en estado Up (healthy):
+    Bash
 
-estudiante@curso-docker:~/Documentos/reservas-app$ docker run -d --name reservasdb --env-file env mysql:8.4
-1f20814423fe5c8232113b38750ab52f4145c0d45a5c0f4b6088f7bedc8506c3
-estudiante@curso-docker:~/Documentos/reservas-app$ docker ps -a
-CONTAINER ID   IMAGE       COMMAND                  CREATED         STATUS         PORTS                 NAMES
-1f20814423fe   mysql:8.4   "docker-entrypoint.s…"   8 seconds ago   Up 8 seconds   3306/tcp, 33060/tcp   reservasdb
-estudiante@curso-docker:~/Documentos/reservas-app$
+    ```  docker compose ps ``` 
 
+    Acceder a la aplicación:
 
-``` 
-``` 
-    se espera la inicializacion de la BD , se ejecuta 
+        Interfaz Web (Frontend):[http://localhost:3000]
 
-    docker logs -f reservasdb y se espera a que aparezca por segunda vez el mensaje ready for connections (port:3306)
+        API REST (Salud / Depuración):[http://localhost:3001/health]   
+        
 
-2026-09-25T01:57:00.848861Z 0 [System] [MY-015015] [Server] MySQL Server - start.
-2026-09-25T01:57:01.160332Z 0 [System] [MY-010116] [Server] /usr/sbin/mysqld (mysqld 8.4.11) starting as process 1
-2026-09-25T01:57:01.166894Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
-2026-09-25T01:57:01.479453Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
-2026-09-25T01:57:01.708476Z 0 [Warning] [MY-010068] [Server] CA certificate ca.pem is self signed.
-2026-09-25T01:57:01.708501Z 0 [System] [MY-013602] [Server] Channel mysql_main configured to support TLS. Encrypted connections are now supported for this channel.
-2026-09-25T01:57:01.711411Z 0 [Warning] [MY-011810] [Server] Insecure configuration for --pid-file: Location '/var/run/mysqld' in the path is accessible to all OS users. Consider choosing a different directory.
-2026-09-25T01:57:01.731331Z 0 [System] [MY-011323] [Server] X Plugin ready for connections. Bind-address: '::' port: 33060, socket: /var/run/mysqld/mysqlx.sock
-2026-09-25T01:57:01.731516Z 0 [System] [MY-010931] [Server] /usr/sbin/mysqld: ready for connections. Version: '8.4.11'  socket: '/var/run/mysqld/mysqld.sock'  port: 3306  MySQL Community Server - GPL.
+    4. Detener y limpiar el entorno:
+    Para detener y eliminar los contenedores conservando el volumen de datos (reservas-db-data):
+    Bash
 
+    ```  docker compose down ```
 
+#### Camino 2: Despliegue en un clúster de Kubernetes (Chart de Helm)
 
-``` 
-``` 
-consulta nuevamente ls tablas:
+Este camino despliega los 12 objetos de la arquitectura completa en Kubernetes (alta disponibilidad, persistencia mediante PVC, autoescalado HPA y enrutamiento por Ingress) utilizando el chart empaquetado en reservas-app/.   
 
-docker exec -it reservasdb mysql -u root -preservasdb_root_pass -e "USE reservasdb; SHOW TABLES;"
 
-al volver a consultar sale nuevamente el mensaje EMPTY indicando que al eliminar el contenedor se perdieron los datos porque no se usaron volumenes
+1. Validar el renderizado de las plantillas antes de instalar:
+    Comprobar que Helm genera correctamente los 12 manifiestos con los valores por defecto:   
+    
+   ```  helm template reservas ./reservas-app ``` 
 
+2. Instalar la release en el clúster:
+    Desplegar la aplicación creando automáticamente el namespace reservas-app:   
 
-estudiante@curso-docker:~/Documentos/reservas-app$ docker ps -a
-CONTAINER ID   IMAGE       COMMAND                  CREATED          STATUS          PORTS                 NAMES
-1f20814423fe   mysql:8.4   "docker-entrypoint.s…"   10 minutes ago   Up 10 minutes   3306/tcp, 33060/tcp   reservasdb
-estudiante@curso-docker:~/Documentos/reservas-app$ docker exec -it reservasdb mysql -u root -preservas_root_pass
-mysql: [Warning] Using a password on the command line interface can be insecure.
-Welcome to the MySQL monitor.  Commands end with ; or \g.
-Your MySQL connection id is 12
-Server version: 8.4.11 MySQL Community Server - GPL
+   ```  helm install reservas ./reservas-app -n reservas-app --create-namespace ``` 
 
-Copyright (c) 2000, 2026, Oracle and/or its affiliates.
+3. Verificar los recursos desplegados:
+    Comprobar que todos los Pods estén en estado Running, el PVC en Bound y el HPA reportando métricas de CPU:   
 
-Oracle is a registered trademark of Oracle Corporation and/or its
-affiliates. Other names may be trademarks of their respective
-owners.
+  ```  kubectl get all,cm,secret,pvc,ingress,hpa -n reservas-app ``` 
 
-Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+4. Configurar la resolución DNS local para el Ingress:
+    Obtener la EXTERNAL-IP asignada al controlador Ingress y asociarla al dominio reservas.local:   
 
-mysql> USE reservasdb
-Database changed
-mysql> SHOW TABLES;
-Empty set (0.00 sec)
+   ```INGRESS_IP=$(kubectl get svc -n nginx-ingress nginx-ingress-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}') ```
+    ```  echo "$INGRESS_IP reservas.local" | sudo tee -a /etc/hosts``` 
 
-mysql> 
+5. Acceder y probar la aplicación:
 
+ Interfaz Web (Frontend): [http://reservas.local](http://reservas.local)   
 
 
+Verificación de API a través del proxy: curl -s [http://reservas.local/api/reservas](http://reservas.local/api/reservas)
 
-``` 
+(Nota de arquitectura: No se define una regla /api en el objeto Ingress porque el servidor Nginx dentro de reservas-frontend ya actúa como proxy inverso hacia http://reservas-api:3000/, manteniendo una única fuente de verdad y paridad con Docker Compose).
 
+6. Desinstalar la release (opcional):
 
+   ```  helm uninstall reservas -n reservas-app ``` 
+ 
+Inventario de los 12 Objetos de Kubernetes
 
+El despliegue completo en Kubernetes (tanto en k8s/ como en el chart reservas-app/) está compuesto exactamente por los siguientes 12 recursos:   
 
+#	Tipo de Objeto	Nombre	Función dentro de la arquitectura
+1.	ConfigMap	reservas-api-config	
 
+Define parámetros no sensibles de la API (DB_HOST, DB_PORT, DB_NAME, PORT, SEED_DEMO).
 
+2.	ConfigMap	reservas-frontend-config	
 
+Define el host y puerto del backend (API_HOST, API_PORT) consumidos por Nginx al iniciar.
+
+3.	Secret	reservas-db-secret	
+
+Almacena credenciales (MYSQL_USER, MYSQL_PASSWORD, MYSQL_ROOT_PASSWORD) inyectadas en MySQL y la API.
+
+4.	PersistentVolumeClaim	reservas-db-pvc	
+
+Solicita 1Gi de almacenamiento persistente (ReadWriteOnce) montado con subPath: mysql.
+
+5.	Service	reservas-db	
+
+Expone internamente (ClusterIP) el motor MySQL en el puerto 3306.
+
+6.	Service	reservas-api	
+
+Expone internamente (ClusterIP) el servicio backend Express en el puerto 3000.
+
+7.	Service	reservas-frontend	
+
+Expone el servidor web Nginx en el puerto 8080 (NodePort 30301).
+
+8.	Deployment	reservas-db	
+
+Gestiona 1 réplica de mysql:8.4 vinculada al volumen persistente reservas-db-pvc.
+
+9.	Deployment	reservas-api	
+
+Gestiona las réplicas de luisv3k/reservas-api con resources.requests.cpu configurado.
+
+10.	Deployment	reservas-frontend	
+
+Gestiona 2 réplicas de luisv3k/reservas-frontend sirviendo la SPA y el proxy /api/.
+
+11.	Ingress	reservas-app-ingress	
+
+Enruta el tráfico HTTP entrante del host reservas.local (/) hacia reservas-frontend:8080.
+
+12.	HorizontalPodAutoscaler	reservas-api-hpa	
+
+Escala automáticamente reservas-api entre 2 y 6 réplicas al superar el 50% de CPU.
