@@ -89,7 +89,7 @@ El proyecto ofrece dos caminos independientes para levantar y verificar la aplic
 
     ```  docker compose down ```
 
-#### Camino 2: Despliegue en un clúster de Kubernetes (Chart de Helm)
+### Camino 2: Despliegue en un clúster de Kubernetes (Chart de Helm)
 
 Este camino despliega los 12 objetos de la arquitectura completa en Kubernetes (alta disponibilidad, persistencia mediante PVC, autoescalado HPA y enrutamiento por Ingress) utilizando el chart empaquetado en reservas-app/.   
 
